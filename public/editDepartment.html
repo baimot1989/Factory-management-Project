@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factory management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="/styles//home.css">
+
+</head>
+
+<body class="bg-body-tertiary">
+    <header class="bg-success">
+        <div>
+            <ul class="navs">
+                <li class="user nav"></li>
+                <li class="logout nav">Log Out</li>
+
+            </ul>
+        </div>
+        <nav>
+            <ul class="navs">
+                <li class="nav"><a class="link-light text-decoration-none" href="http://localhost:3000/authusers/users">Users</a></li>
+                <li class="nav"><a class="link-light text-decoration-none" href="http://localhost:3000/authusers/departments">Departments</a></li>
+                <li class="nav"><a class="link-light text-decoration-none" href="http://localhost:3000/authusers/employees">Employees</a></li>
+                <li class="nav"><a class="link-light text-decoration-none" href="http://localhost:3000/authusers/shifts">Shifts</a></li>
+            </ul>
+        </nav>
+    </header>
+    <h1 class="row justify-content-center m-3">Edit Department</h1>
+      <div class="container-lg w-75">
+        <form class="form">
+
+            <div class="mb-3">
+                <label for="name" class="form-label">Department Name:</label>
+                <input type="text" class="form-control" id="name" name="name">
+            </div>
+            <div class="mb-3">
+                <label for="manager" class="form-label">Manager Name:</label>
+                <input type="text" class="form-control" id="manager" name="manager">
+            </div>
+         
+            <div class="mb-3">
+                <label for="addEmployee" class="form-label">Add Employee to Department:</label>
+               <div class="d-flex w-50">
+                <select class="form-select" name="addEmployee" id="addEmployee">
+                    <option value="">select employee:</option>
+                </select>
+                <button id="assign" class="btn btn-success">Add</button>
+               </div>
+            </div>
+            <button class="delete btn btn-success">Delete Department</button>
+            <button class="btn btn-success">Update</button><br><br>
+        </form>
+      </div>
+    
+
+
+    <script>
+
+        const userName = JSON.parse(localStorage.getItem('userName'));
+        document.querySelector('.user').textContent = userName;
+
+        const logout = document.querySelector('.logout');
+
+        logout.addEventListener('click', async (e) => {
+            e.preventDefault();
+            localStorage.removeItem('userName');
+            const res = await fetch("http://localhost:3000/login/logout");
+            if (res.redirected) {
+                window.location.href = res.url;
+            }
+
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const departmentId = urlParams.get('id');
+
+        console.log('Department ID:', departmentId);
+        const departmentsUrl = `http://localhost:3000/departments/${departmentId}`;
+        const employeesUrl = `http://localhost:3000/employees`;
+
+
+
+
+        const form = document.querySelector('.form');
+        const name = document.getElementById('name');
+        const manager = document.getElementById('manager');
+        const newDepartment = document.querySelector('.new-dep');
+        const deleteDepartment = document.querySelector('.delete');
+        const addEmployee = document.querySelector('#addEmployee');
+        const assignEmployee = document.querySelector('#assign');
+
+
+        const getDepartmentAndAllEmployees = async () => {
+            const resDep = await fetch(departmentsUrl);
+            const user = await resDep.json();
+            name.value = user.name;
+            manager.value = user.manager;
+            const resEmp = await fetch(employeesUrl);
+            const employees = await resEmp.json();
+            employees.forEach(employee => {
+                const optionTag = document.createElement('option');
+                optionTag.value = employee._id;
+                optionTag.textContent = `${employee.firstName} ${employee.lastName}`;
+                addEmployee.appendChild(optionTag);
+            });
+
+            return user;
+        }
+        const user = getDepartmentAndAllEmployees().then(value => value);
+
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = form.name.value;
+            const manager = form.manager.value;
+
+            const res = await fetch(departmentsUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, manager })
+            });
+
+            const data = await res.json();
+            if (data) {
+                window.location.href = 'http://localhost:3000/authusers/departments';
+            }
+        });
+
+        deleteDepartment.addEventListener('click', async (e) => {
+            e.preventDefault()
+            const res = await fetch(departmentsUrl, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+
+            const data = await res.json();
+            console.log(data)
+            if (data) {
+                window.location.href = 'http://localhost:3000/authusers/departments';
+            }
+
+        })
+        assignEmployee.addEventListener('click', async (e) => {
+            console.log(addEmployee.value)
+            const res = await fetch(`${employeesUrl}/${addEmployee.value}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ departmentId: departmentId })
+            });
+
+            const data = await res.json();
+            console.log(data)
+
+
+        })
+
+
+    </script>
+</body>
+
+</html>

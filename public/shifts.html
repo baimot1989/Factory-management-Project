@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factory management</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="/styles//home.css">
+    <style>
+        .navs {
+            display: flex;
+            list-style-type: none;
+            justify-content: end;
+        }
+
+        .nav {
+            padding: 10px 15px;
+        }
+
+        table {
+            border: 1px solid black;
+        }
+
+        .none {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="bg-body-tertiary">
+    <header class="bg-success">
+        <div>
+            <ul class="navs">
+                <li class="user nav"></li>
+                <li class="logout nav">Log Out</li>
+
+            </ul>
+        </div>
+        <nav>
+            <ul class="navs">
+                <li class="nav"><a class="link-light text-decoration-none"
+                        href="http://localhost:3000/authusers/users">Users</a></li>
+                <li class="nav"><a class="link-light text-decoration-none"
+                        href="http://localhost:3000/authusers/departments">Departments</a></li>
+                <li class="nav"><a class="link-light text-decoration-none"
+                        href="http://localhost:3000/authusers/employees">Employees</a></li>
+                <li class="nav"><a class="link-light text-decoration-none"
+                        href="http://localhost:3000/authusers/home">Home</a></li>
+            </ul>
+        </nav>
+    </header>
+    <h1 class="row justify-content-center m-3">Shifts</h1>
+    <div class="container-lg user">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Start time</th>
+                    <th>End time</th>
+                    <th>Edit</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table><br>
+
+
+        <form>
+            <legend>Adding employee to a shift:</legend><br>
+            <div class="d-flex justify-content-between w-75">
+                <div class="d-flex justify-content-start flex-fill">
+                    <label class="form-label pe-3 align-self-end" for="employee">Select employee:</label>
+                    <select class="form-select w-50" name="employee" id="employee" required>
+                        <option value="">select</option>
+                    </select>
+                </div>
+
+                <div class="d-flex justify-content-start flex-fill">
+                    <label class="form-label pe-3 align-self-end" for="shift">Select shift:</label>
+                    <select class="form-select w-50" name="shift" id="shift" required>
+                        <option value="">select</option>
+                    </select>
+                </div>
+                <button class="btn btn-success w-25 flex-fill add" onclick="addEmployeeToShift()">Add</button>
+            </div>
+
+
+        </form><br>
+        <button class="btn btn-success px-5 my-2 new-shift" onclick="createNewSift()"> create new shift</button>
+
+
+        <div class="edit none">
+            <h2>Edit Shift</h2>
+            <form class="form">
+                <div class="mb-3 w-50">
+                    <label for="date" class="form-label">Date:</label>
+                    <input type="text" class="form-control" id="date" name="date">
+                </div>
+                <div class="mb-3 w-50">
+                    <label for="startingHour" class="form-label">Start time:</label>
+                    <input type="text" class="form-control" id="startingHour" name="startingHour">
+                </div>
+                <div class="mb-3 w-50">
+                    <label for="endingHour" class="form-label">End time:</label>
+                    <input type="text" class="form-control" id="endingHour" name="endingHour">
+                </div>
+                <button class="btn btn-success px-5 cancel">Cancel</button>
+                <button class="btn btn-success px-5">Update</button>
+            </form>
+        </div>
+
+        <div class="create none">
+            <h2>Create Shift</h2>
+            <form class="form">
+                <div class="mb-3 w-50">
+                    <label for="date1" class="form-label">Date:</label>
+                    <input type="text" class="form-control" id="date1" name="date">
+                </div>
+                <div class="mb-3 w-50">
+                    <label for="startingHour1" class="form-label">Start time:</label>
+                    <input type="text" class="form-control" id="startingHour1" name="startingHour">
+                </div>
+                <div class="mb-3 w-50">
+                    <label for="endingHour1" class="form-label">End time:</label>
+                    <input type="text" class="form-control" id="endingHour1" name="endingHour">
+                </div>
+                <button class="btn btn-success px-5 cancel">Cancel</button>
+                <button class="btn btn-success px-5"
+                    onclick="createNewSiftReq(date1.value,startingHour1.value,endingHour1.value)">Create</button>
+            </form>
+        </div>
+    </div>
+    <script>
+
+        const userName = JSON.parse(localStorage.getItem('userName'));
+        document.querySelector('.user').textContent = userName;
+
+        const logout = document.querySelector('.logout');
+
+        logout.addEventListener('click', async (e) => {
+            e.preventDefault();
+            localStorage.removeItem('userName');
+            const res = await fetch("http://localhost:3000/login/logout");
+            if (res.redirected) {
+                window.location.href = res.url;
+            }
+        })
+
+        const tbody = document.getElementById('tbody');
+        const shiftsUrl = "http://localhost:3000/shifts";
+        const employeessUrl = "http://localhost:3000/employees";
+        const form = document.querySelector('.form');
+        const dateInp = document.getElementById('date');
+        const startTimeInp = document.getElementById('startingHour');
+        const endTimeInp = document.getElementById('endingHour');
+        const formDiv = document.querySelector('.none');
+        const editShift = document.querySelector('.edit');
+        const createShift = document.querySelector('.create');
+        const cancel = document.querySelectorAll('.cancel');
+        const employeeOption = document.getElementById('employee');
+        const shiftOption = document.getElementById('shift');
+
+        const getAllShifts = async () => {
+            const resSifts = await fetch(shiftsUrl);
+            const dataShifts = await resSifts.json();
+            const resEmp = await fetch(employeessUrl);
+            const dataEmp = await resEmp.json();
+
+            return {
+                employees: dataEmp,
+                shifts: dataShifts
+            }
+        }
+        getAllShifts().then(value => filTable(value));
+
+        const filTable = (dataObj) => {
+            const { employees, shifts } = dataObj;
+            fileOption(dataObj)
+            tbody.innerHTML = '';
+            let counter = 0;
+            shifts.forEach(item => {
+                counter += 1
+                const tr = document.createElement('tr');
+                const date = document.createElement('td');
+                const startTime = document.createElement('td');
+                const endTime = document.createElement('td');
+                const edit = document.createElement('td');
+
+                date.textContent = item.date;
+                startTime.textContent = item.startingHour;
+                endTime.textContent = item.endingHour;
+                edit.textContent = 'Edit';
+                edit.classList.add('text-primary')
+
+                tr.setAttribute("id", `a${counter}`)
+                tr.appendChild(date);
+                tr.appendChild(startTime);
+                tr.appendChild(endTime);
+                tr.appendChild(edit);
+                tbody.appendChild(tr);
+                edit.addEventListener('click', () => {
+
+                    if (!createShift.classList.contains('none')) {
+                        createShift.classList.add('none')
+                        console.log('hello')
+                    }
+                    formDiv.classList.remove("none");
+                    form.setAttribute("data-id", item._id)
+
+                    dateInp.value = date.textContent;
+                    startTimeInp.value = startTime.textContent;
+                    endTimeInp.value = endTime.textContent;
+
+                })
+            });
+        };
+        const fileOption = (dataObj) => {
+            const { employees, shifts } = dataObj;
+
+            employees.forEach(item => {
+                const option = document.createElement('option');
+                option.setAttribute('id', `${item._id}`)
+                option.textContent = `${item.firstName} ${item.lastName}`;
+                employeeOption.appendChild(option);
+
+            })
+            shifts.forEach(item => {
+                const option = document.createElement('option');
+                option.setAttribute('id', `${item._id}`)
+                option.textContent = `${item.date} ${item.startingHour} ${item.endingHour}`;
+                shiftOption.appendChild(option)
+            })
+        }
+
+        form.addEventListener('submit', async (e) => {
+            const id = form.getAttribute("data-id");
+            console.log(id)
+            const date = form.date.value
+            const startingHour = form.startingHour.value
+            const endingHour = form.endingHour.value
+
+            const res = await fetch(`${shiftsUrl}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date, startingHour, endingHour })
+            });
+            const data = await res.json();
+            console.log(data, res);
+        });
+        const createNewSift = async (date, startingHour, endingHour) => {
+            if (!editShift.classList.contains('none')) {
+                editShift.classList.add('none')
+            }
+            createShift.classList.remove('none');
+        }
+        const createNewSiftReq = async (date, startingHour, endingHour) => {
+            const res = await fetch(shiftsUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date, startingHour, endingHour })
+            });
+            const data = await res.json();
+            console.log(data, res);
+        }
+        cancel.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                editShift.classList.add('none');
+                createShift.classList.add('none');
+            })
+        })
+        const addEmployeeToShift = async (e) => {
+            const employeeSelectd = employeeOption.options[employeeOption.selectedIndex]; //get the selected option from the employees select tag
+            const shiftSelectd = shiftOption.options[shiftOption.selectedIndex]; //get the selected option from the shifts select tag
+            const res = await fetch(`${employeessUrl}/${employeeSelectd.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ shiftId: shiftSelectd.id, indc: 'arry' })
+            });
+            const data = await res.json();
+            console.log(data, res);
+        }
+    </script>
+</body>
+
+</html>

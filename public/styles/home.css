@@ -1,0 +1,22 @@
+header {
+    display: flex;
+    justify-content: space-between;
+    color:honeydew ;
+}
+
+.navs {
+    display: flex;
+    list-style-type: none;
+    justify-content: end;
+    margin: 0;
+    padding: 0;
+}
+.nav {
+    padding: 10px 15px;
+}
+a {
+    text-decoration: none;
+}
+.none {
+    display: none;
+}

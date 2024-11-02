@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factory management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="/styles//home.css">
+
+</head>
+
+<body class="bg-body-tertiary">
+    <header class="bg-success">
+        <div>
+            <ul class="navs">
+                <li class="user nav"></li>
+                <li class="logout nav">Log Out</li>
+
+            </ul>
+        </div>
+        <nav>
+            <ul class="navs">
+                <li class="nav"><a class="text-decoration-none link-light "
+                        href="http://localhost:3000/authusers/users">Users</a></li>
+                <li class="nav"><a class="text-decoration-none link-light"
+                        href="http://localhost:3000/authusers/departments">Departments</a></li>
+                <li class="nav"><a class="text-decoration-none link-light"
+                        href="http://localhost:3000/authusers/employees">Employees</a></li>
+                <li class="nav"><a class="text-decoration-none link-light"
+                        href="http://localhost:3000/authusers/shifts">Shifts</a></li>
+            </ul>
+        </nav>
+    </header>
+    <h1>Edit Employee</h1>
+     <div class="container-lg w-50">
+        <form class="form">
+            <div class="mb-3">
+                <label for="firstName" class="form-label">First Name:</label>
+                <input type="text" class="form-control" id="firstName" name="firstName">
+            </div>
+            <div class="mb-3">
+                <label for="lastName" class="form-label">Last Name:</label>
+                <input type="text" class="form-control" id="lastName" name="lastName">
+            </div>
+            <div class="mb-3">
+                <label for="startWorkYear" class="form-label">Start of work:</label>
+                <input type="text" class="form-control" id="startWorkYear" name="startWorkYear">
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="departmentId">Department:</label>
+                <select class="form-select" name="departmentId" id="departmentId" required>
+                </select>
+            </div>
+           
+            <button class="delete btn btn-success">Delete Employee</button>
+            <button class="btn btn-success">Update</button><br><br>
+        </form>
+     </div>
+    
+
+    <script>
+
+        const userName = JSON.parse(localStorage.getItem('userName'));
+        document.querySelector('.user').textContent = userName;
+
+        const logout = document.querySelector('.logout');
+
+        logout.addEventListener('click', async (e) => {
+            e.preventDefault();
+            localStorage.removeItem('userName');
+            const res = await fetch("http://localhost:3000/login/logout");
+            if (res.redirected) {
+                window.location.href = res.url;
+            }
+
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+
+        const employeeUrl = `http://localhost:3000/employees/${userId}`;
+        const departmentsUrl = `http://localhost:3000/departments`;
+
+        const form = document.querySelector('.form');
+        const firstName = document.getElementById('firstName');
+        const lastName = document.getElementById('lastName');
+        const departmentSelected = document.getElementById('departmentId');
+        const startWorkYear = document.getElementById('startWorkYear');
+        const departmentName = document.querySelector('.departmentId');
+        const deleteDepartment = document.querySelector('.delete');
+
+        const getUser = async () => {
+            const resEmployee = await fetch(employeeUrl);
+            const user = await resEmployee.json();
+            // const resDepartment = await fetch(`${departmentsUrl}/${user.departmentId}`);
+            const resDepartments = await fetch(`${departmentsUrl}`);
+            const departments = await resDepartments.json();
+            const department = departments.find(dep => dep._id === user.departmentId);
+            const option1 = document.createElement('option');
+
+            firstName.value = user.firstName;
+            lastName.value = user.lastName;
+            startWorkYear.value = user.startWorkYear;
+            option1.textContent = department.name;
+            option1.setAttribute('id', `${department._id}`);
+            departmentSelected.appendChild(option1);
+            const newDepartment = departments.filter(item => item._id !== department._id);
+            newDepartment.forEach(item => {
+                const option = document.createElement('option');
+                option.textContent = item.name;
+                option.setAttribute('id', `${item._id}`);
+                departmentSelected.appendChild(option);
+            })
+
+            return user;
+        }
+
+        const user = getUser().then(value => value);
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const firstName = form.firstName.value;
+            const lastName = form.lastName.value;
+            const startWorkYear = form.startWorkYear.value;
+            const departmentId = departmentSelected.options[departmentSelected.selectedIndex].id;
+           console.log(departmentId)
+            const res = await fetch(employeeUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firstName, lastName, startWorkYear, departmentId })
+            });
+
+            const data = await res.json();
+            if (data) {
+                window.location.href = 'http://localhost:3000/authusers/employees';
+            }
+        });
+
+        deleteDepartment.addEventListener('click', async (e) => {
+            e.preventDefault()
+            const res = await fetch(employeeUrl, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+
+            const data = await res.json();
+            console.log(data)
+            if (data) {
+                window.location.href = 'http://localhost:3000/authusers/employees';
+            }
+
+        })
+
+    </script>
+</body>
+
+</html>
