@@ -15,7 +15,6 @@ const addEmployee = (obj) => {
 
  const updateEmployee  = async (id, obj) => {
    const {shiftId, indc } = obj;
-   console.log(shiftId,indc)
 if(indc) { //  the if bolck checks if the update is for employeesId array properte or the rest of properties 
    const employee = await getEmployeeById(id)
    employee.shiftsId.push(shiftId)
