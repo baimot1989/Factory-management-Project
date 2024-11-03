@@ -54,7 +54,7 @@ const requireAuth2 = (req, res, next) => {
             }
         })
     } else {
-        res.json('Request rejected, you need to register')
+        res.json('Request rejected, You are not authorized')
     }
 }
 
